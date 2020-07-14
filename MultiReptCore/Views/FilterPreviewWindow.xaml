@@ -1,0 +1,107 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:MultiReptCore.ViewModels;assembly=MultiReptCore"
+        xmlns:local="clr-namespace:MultiReptCore;assembly=MultiReptCore"
+        xmlns:fsnv="clr-namespace:FusianValid.Avalonia;assembly=FusianValid.Avalonia"
+
+        Width="400" Height="300"
+        
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="MultiReptCore.Views.FilterPreviewWindow"
+        Title="FilterPreviewWindow">
+
+  <Design.DataContext>
+    <vm:FilterPreviewWindowViewModel/>
+  </Design.DataContext>
+
+  <Grid>
+    <Grid.Styles>
+      <Style Selector="TextBlock.cap">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+      </Style>
+    </Grid.Styles>
+
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto"/>
+      <ColumnDefinition Width="200*"/>
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="200*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <TextBlock
+        Classes="cap"
+        Grid.Row="0" Grid.Column="0"
+        Text="{local:Message RootDirectory}"
+        />
+
+    <TextBox
+        Grid.Row="0" Grid.Column="1"
+        Text="{Binding RootDirectory}"
+        />
+
+    <fsnv:ErrorTextBlock
+        Classes="cap err"
+        Grid.Row="1" Grid.Column="1"
+        Path="RootDirectory" />
+
+
+
+    <TextBlock
+        Classes="cap"
+        Grid.Row="2" Grid.Column="0"
+        Text="{local:Message FilenameFilter}"
+        />
+
+    <TextBox
+        Grid.Row="2" Grid.Column="1"
+        Text="{Binding FilenameFilter}"
+        />
+
+    <fsnv:ErrorTextBlock
+        Classes="cap err"
+        Grid.Row="3" Grid.Column="1"
+        Path="FilenameFilter"/>
+
+    <TreeView
+        Grid.Row="4" Grid.Column="0"
+        Grid.ColumnSpan="2"
+        Items="{Binding Entries}"
+        >
+      <TreeView.DataTemplates>
+        <TreeDataTemplate DataType="vm:DirectoryViewModel" ItemsSource="{Binding SubEntries}">
+          <StackPanel Orientation="Horizontal">
+            <Image Source="/Assets/directory.png"/>
+            <TextBlock Text="{Binding Name}" />
+          </StackPanel>
+        </TreeDataTemplate>
+        <DataTemplate DataType="vm:FileViewModel">
+          <StackPanel Orientation="Horizontal">
+            <CheckBox
+                IsChecked="{Binding IsTarget}"
+                IsEnabled="False"
+                />
+            <Image Source="/Assets/file.png"/>
+            <TextBlock Text="{Binding Name}" />
+          </StackPanel>
+        </DataTemplate>
+      </TreeView.DataTemplates>
+    </TreeView>
+
+    <StackPanel Grid.Row="5" Grid.Column="0"
+        Grid.ColumnSpan="2"
+        Orientation="Horizontal"
+        HorizontalAlignment="Center"
+        >
+      <Button Content="{local:Message OK}"     Click="Ok_Clicked" Width="60" Margin="5,0"/>
+      <Button Content="{local:Message Cancel}" Click="Cancel_Clicked" Width="60" Margin="5,0"/>
+    </StackPanel>
+  </Grid>
+</Window>

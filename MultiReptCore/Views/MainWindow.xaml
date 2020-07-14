@@ -1,0 +1,260 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:MultiReptCore.ViewModels;assembly=MultiReptCore"
+        xmlns:local="clr-namespace:MultiReptCore;assembly=MultiReptCore"
+        xmlns:fsnv="clr-namespace:FusianValid.Avalonia;assembly=FusianValid.Avalonia"
+        
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+        x:Class="MultiReptCore.Views.MainWindow"
+        Width="400" Height="450"
+        Icon="/Assets/logo.ico"
+        Title="MultiReptCore">
+
+  <Design.DataContext>
+    <vm:MainWindowViewModel/>
+  </Design.DataContext>
+
+  <TabControl>
+    <TabControl.Styles>
+      <Style Selector="TabItem">
+        <Setter Property="Padding" Value="8,2"/>
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeNormal}"/>
+      </Style>
+      <Style Selector="TabItem:selected">
+        <Setter Property="BorderThickness" Value="0,0,0,2"/>
+        <Setter Property="BorderBrush" Value="Blue"/>
+      </Style>
+
+    </TabControl.Styles>
+    <TabItem Header="{local:Message TabReplace}">
+      <Grid>
+        <Grid.Styles>
+          <Style Selector="TextBlock.cap">
+            <Setter Property="Margin" Value="0,3,3,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+          </Style>
+          <Style Selector="TextBox">
+            <Setter Property="Margin" Value="0,3,3,0"/>
+            <Setter Property="Padding" Value="2"/>
+          </Style>
+          <Style Selector="ComboBox">
+            <Setter Property="Margin" Value="0,3,3,0"/>
+            <Setter Property="Padding" Value="2"/>
+          </Style>
+          <Style Selector="Button">
+            <Setter Property="Margin" Value="0,3,3,0"/>
+            <Setter Property="Padding" Value="2"/>
+          </Style>
+          <Style Selector="ToggleButton">
+            <Setter Property="Margin" Value="0,3,3,0"/>
+            <Setter Property="Padding" Value="2"/>
+          </Style>
+        </Grid.Styles>
+
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="200*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="200*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            Classes="cap"
+            Grid.Row="0" Grid.Column="0"
+            Text="{local:Message RootDirectory}"
+            />
+
+        <TextBox
+            Grid.Row="0" Grid.Column="1"
+            Text="{Binding RootDirectory}"
+            />
+
+        <Button
+            Grid.Row="0" Grid.Column="2"
+            Content="{local:Message BrowseRootDirectory}"
+            Command="{Binding RunBrowseRootDirectory}"
+            />
+
+        <TextBlock
+            Classes="cap"
+            Grid.Row="1" Grid.Column="0"
+            Text="{local:Message FilenameFilter}"
+            />
+
+        <TextBox
+            Grid.Row="1" Grid.Column="1"
+            Text="{Binding FilenameFilter}"
+            />
+
+        <Button
+            Grid.Row="1" Grid.Column="2"
+            Content="{local:Message PreviewFilter}"
+            Command="{Binding RunPreviewFilter}"
+            />
+
+        <CheckBox
+            Grid.Row="2" Grid.Column="1"
+            Grid.ColumnSpan="2"
+            Content="{local:Message IgnoreHiddenFile}"
+            />
+
+        <TextBlock
+            Classes="cap"
+            Grid.Row="3" Grid.Column="0"
+            Text="{local:Message Encoding}"
+            />
+        <ComboBox
+            Grid.Row="3" Grid.Column="1"
+            Items="{x:Static vm:EncodeViewModel.List}"
+            SelectedItem="{Binding SelectedEncode}"
+            IsEnabled="{Binding IsEncodeAutoDetect, Converter={x:Static local:BoolConverters.Not}}">
+          <ComboBox.DataTemplates>
+            <DataTemplate>
+              <TextBlock Text="{Binding Name}"/>
+            </DataTemplate>
+          </ComboBox.DataTemplates>
+        </ComboBox>
+
+        <ToggleButton
+          Grid.Row="3" Grid.Column="2"
+          IsChecked="{Binding IsEncodeAutoDetect}"
+          Content="{local:Message Auto}"/>
+
+
+        <DockPanel
+          Grid.Row="4" Grid.Column="0"
+          Grid.ColumnSpan="3"
+          LastChildFill="True">
+
+          <StackPanel Orientation="Horizontal"
+            DockPanel.Dock="Top">
+
+            <Button Content="{local:Message Add}" Command="{Binding RunAdd}"/>
+            <Button Content="{local:Message Remove}" Margin="8,0,0,0" Command="{Binding RunRemove}"/>
+          </StackPanel>
+
+          <ListBox Items="{Binding Keywords}" SelectedItem="{Binding SelectedKeyword}">
+            <ListBox.Styles>
+              <Style Selector="ListBoxItem.even"  >
+
+              </Style>
+            </ListBox.Styles>
+
+            <ListBox.ItemTemplate>
+              <DataTemplate DataType="vm:KeywordViewModel">
+                <Grid Background="{Binding Background}">
+                  <Grid.Styles>
+                    <Style Selector="Grid.even">
+                      <Setter Property="Background" Value="Gray"/>
+                    </Style>
+                    <Style Selector="TextBlock.cap">
+                      <Setter Property="Margin" Value="0,3,3,0"/>
+                      <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                    <Style Selector="TextBox">
+                      <Setter Property="Margin" Value="0,3,3,0"/>
+                      <Setter Property="Padding" Value="2"/>
+                    </Style>
+                    <Style Selector="TextBox.error">
+                      <Setter Property="Background" Value="Pink"/>
+                    </Style>
+                    <Style Selector="ComboBox">
+                      <Setter Property="Margin" Value="0,3,3,0"/>
+                      <Setter Property="Padding" Value="2"/>
+                    </Style>
+                    <Style Selector="Button">
+                      <Setter Property="Margin" Value="0,3,3,0"/>
+                      <Setter Property="Padding" Value="2"/>
+                    </Style>
+                    <Style Selector="ToggleButton">
+                      <Setter Property="Margin" Value="0,3,3,0"/>
+                      <Setter Property="Padding" Value="2"/>
+                    </Style>
+                  </Grid.Styles>
+
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                  </Grid.RowDefinitions>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="100*"/>
+                  </Grid.ColumnDefinitions>
+
+                  <TextBlock
+                      Classes="cap"
+                      Grid.Row="0" Grid.Column="0"
+                      Text="{local:Message Keyword}"/>
+                  <TextBox
+                      Grid.Row="0" Grid.Column="1"
+                      fsnv:Error.Observe="Keyword"
+                      Text="{Binding Keyword}"/>
+
+                  <TextBlock
+                      Classes="cap"
+                      Grid.Row="1" Grid.Column="0"
+                      Text="{local:Message ReplaceWord}"/>
+                  <TextBox
+                      Grid.Row="1" Grid.Column="1"
+                      Text="{Binding ReplaceWord}"/>
+
+                  <TextBlock
+                      Grid.Row="2" Grid.Column="0"
+                      />
+                  <StackPanel
+                      Grid.Row="2" Grid.Column="1"
+                      Grid.ColumnSpan="2"
+                      Orientation="Horizontal"
+                      Margin="0,3,3,0">
+                    <RadioButton
+                      IsChecked="{Binding IsPlain}"
+                      Content="{local:Message Plain}"
+                      />
+                    <RadioButton
+                      IsChecked="{Binding IsWord}"
+                      Content="{local:Message Word}"
+                      />
+                    <RadioButton
+                      IsChecked="{Binding IsRegex}"
+                      Content="{local:Message Regex}"
+                      />
+                  </StackPanel>
+
+                </Grid>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+
+          </ListBox>
+
+        </DockPanel>
+
+
+
+        <DockPanel
+            Grid.Row="5" Grid.Column="0"
+            Grid.ColumnSpan="2">
+
+        </DockPanel>
+
+
+      </Grid>
+
+
+
+    </TabItem>
+    <TabItem Header="{local:Message TagHistory}">
+    </TabItem>
+  </TabControl>
+
+
+
+</Window>
