@@ -7,13 +7,8 @@ namespace FusianValid
 {
     public abstract class Validator
     {
-        public string Property
-        {
-            [return: NotNull]
-            get;
-            protected set;
-        }
+        public string Property { get; protected set; }
 
-        public abstract bool Validate([NotNull]object value);
+        public abstract bool Validate(object value);
     }
 }

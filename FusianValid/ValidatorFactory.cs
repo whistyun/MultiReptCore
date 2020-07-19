@@ -6,5 +6,5 @@ using System.Text;
 
 namespace FusianValid
 {
-    [return: NotNull] public delegate Validator ValidatorFactory([NotNull]string propNm);
+    public delegate Validator ValidatorFactory(string propNm);
 }
