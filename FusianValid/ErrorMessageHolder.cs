@@ -7,8 +7,7 @@ namespace FusianValid
 {
     public class ErrorMessageHolder
     {
-        internal Dictionary<string, ValidationResult> Results { get; }
-        internal Dictionary<string, List<ValidationResult>> IndirectMessages { get; }
+        internal Dictionary<string, List<ValidationResult>> Results { get; }
 
         public bool HasError
         {
@@ -29,68 +28,64 @@ namespace FusianValid
 
         public bool TryGetValue(string property, out string message)
         {
-            if (Results.TryGetValue(property, out var res))
+            if (Results.TryGetValue(property, out var resLst))
             {
-                if (res.Result == Result.Invalid)
-                {
-                    message = res.Message;
-                    return true;
-                }
-            }
-            if (IndirectMessages.TryGetValue(property, out var reslst))
-            {
-                foreach (var r in reslst)
-                {
-                    if (r.Result == Result.Invalid)
-                    {
-                        message = r.Message;
-                        return true;
-                    }
-                }
-            }
-            message = null;
-            return false;
-        }
-
-        internal void Set(string property, ValidationResult res)
-        {
-            if (res is null
-                || res.Result == Result.Valid
-                || res.Result == Result.Insufficient
-                || res.Message is null)
-            {
-                RemoveOldResult(property);
+                message = resLst[0].Message;
+                return true;
             }
             else
             {
-                RemoveOldResult(property);
+                message = null;
+                return false;
+            }
+        }
 
-                Results[property] = res;
+        internal void Set(string property, ValidationResult vrslt)
+        {
+            if (vrslt is null) throw new NullReferenceException();
 
-                foreach (var anothProp in res.RelatedProperty)
+            if (vrslt.Result == Result.Invalid)
+            {
+                if (!Results.TryGetValue(property, out var rlst))
                 {
-                    if (!IndirectMessages.TryGetValue(anothProp, out var resultList))
+                    rlst = new List<ValidationResult>();
+                    Results[property] = rlst;
+                }
+
+                if (!rlst.Contains(vrslt))
+                {
+                    rlst.Insert(0, vrslt);
+                }
+
+                foreach (var anothProp in vrslt.RelatedProperty.Where(p => p != property))
+                {
+                    if (!Results.TryGetValue(anothProp, out var arlst))
                     {
-                        resultList = new List<ValidationResult>();
-                        IndirectMessages[anothProp] = resultList;
+                        arlst = new List<ValidationResult>();
+                        Results[anothProp] = arlst;
                     }
 
-                    resultList.Add(res);
+                    if (!arlst.Contains(vrslt))
+                    {
+                        arlst.Add(vrslt);
+                    }
                 }
             }
         }
 
-        private void RemoveOldResult(string property)
+        internal void Remove(ValidationResult vrslt)
         {
-            if (Results.TryGetValue(property, out var result))
+            if (vrslt.Result == Result.Invalid)
             {
-                Results.Remove(property);
-
-                foreach (var anothProp in result.RelatedProperty)
+                foreach (var key in vrslt.RelatedProperty)
                 {
-                    if (IndirectMessages.TryGetValue(anothProp, out var resultList)
-                            && resultList.Remove(result) && resultList.Count == 0)
-                        IndirectMessages.Remove(anothProp);
+                    if (Results.TryGetValue(key, out var rlst))
+                    {
+                        if (rlst.Remove(vrslt) && rlst.Count == 0)
+                        {
+                            Results.Remove(key);
+                        }
+                    }
                 }
             }
         }
@@ -98,14 +93,12 @@ namespace FusianValid
 
         public ErrorMessageHolder()
         {
-            Results = new Dictionary<string, ValidationResult>();
-            IndirectMessages = new Dictionary<string, List<ValidationResult>>();
+            Results = new Dictionary<string, List<ValidationResult>>();
         }
 
         public ErrorMessageHolder(ErrorMessageHolder cp)
         {
-            Results = new Dictionary<string, ValidationResult>(cp.Results);
-            IndirectMessages = new Dictionary<string, List<ValidationResult>>(cp.IndirectMessages);
+            Results = new Dictionary<string, List<ValidationResult>>(cp.Results);
         }
 
         public ErrorMessageHolder Copy()
@@ -121,15 +114,6 @@ namespace FusianValid
                 foreach (var entry in Results)
                 {
                     if (msg.Results.TryGetValue(entry.Key, out var tgtVal))
-                    {
-                        return entry.Value.Equals(tgtVal);
-                    }
-                    else return false;
-                }
-
-                foreach (var entry in IndirectMessages)
-                {
-                    if (msg.IndirectMessages.TryGetValue(entry.Key, out var tgtVal))
                     {
                         return entry.Value.Equals(tgtVal);
                     }

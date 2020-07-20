@@ -72,13 +72,14 @@ namespace FusianValid
             {
                 var errMsgs = ErrorMessages.Copy();
 
-                var anotherProps = validator.ClearResult().Where(p => p != propNm);
+                if (validator.LastResult != null) {
+                    errMsgs.Remove(validator.LastResult);
+                }
+
+                validator.ClearResult();
 
                 errMsgs.Set(propNm, validator.ContinueCheck(TargetViewModel));
 
-                foreach (var aPropNm in anotherProps)
-                    if (PropNm2Validator.TryGetValue(propNm, out var aChain))
-                        errMsgs.Set(aPropNm, aChain.ContinueCheck(TargetViewModel));
                 ErrorMessages = errMsgs;
             }
         }

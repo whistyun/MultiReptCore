@@ -43,19 +43,12 @@ namespace FusianValid
             return result;
         }
 
-        public IEnumerable<string> ClearResult()
+        public void ClearResult()
         {
-            var lastIdx = LastValidation is null ? 0 : Chains.IndexOf(LastValidation);
             LastValidation = null;
-
+            LastResult = null;
             foreach (var chain in Chains)
                 chain.ClearResult();
-
-            return new HashSet<string>(
-                Chains
-                    .Take(lastIdx)
-                    .SelectMany(p => p.Properties)
-                    .Distinct());
         }
     }
 }

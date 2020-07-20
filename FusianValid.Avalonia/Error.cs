@@ -51,10 +51,12 @@ namespace FusianValid.Avalonia
                     if (!control.Classes.Contains("error"))
                         control.Classes.Add("error");
 
+                    ToolTip.SetTip(control, message);
                 }
                 else
                 {
                     control.Classes.Remove("error");
+                    ToolTip.SetTip(control, null);
                 }
             }
         }
