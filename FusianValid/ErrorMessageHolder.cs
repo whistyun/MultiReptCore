@@ -7,7 +7,7 @@ namespace FusianValid
 {
     public class ErrorMessageHolder
     {
-        internal Dictionary<string, List<ValidationResult>> Results { get; }
+        internal Dictionary<string, ErrorMessageEntry> Results { get; }
 
         public bool HasError
         {
@@ -30,7 +30,7 @@ namespace FusianValid
         {
             if (Results.TryGetValue(property, out var resLst))
             {
-                message = resLst[0].Message;
+                message = resLst.Message;
                 return true;
             }
             else
@@ -46,63 +46,57 @@ namespace FusianValid
 
             if (vrslt.Result == Result.Invalid)
             {
-                if (!Results.TryGetValue(property, out var rlst))
+                if (Results.TryGetValue(property, out var rlst))
                 {
-                    rlst = new List<ValidationResult>();
+                    rlst.AddToTop(vrslt);
+                }
+                else
+                {
+                    rlst = new ErrorMessageEntry(vrslt);
                     Results[property] = rlst;
+
                 }
 
-                if (!rlst.Contains(vrslt))
-                {
-                    rlst.Insert(0, vrslt);
-                }
 
                 foreach (var anothProp in vrslt.RelatedProperty.Where(p => p != property))
                 {
-                    if (!Results.TryGetValue(anothProp, out var arlst))
-                    {
-                        arlst = new List<ValidationResult>();
-                        Results[anothProp] = arlst;
-                    }
-
-                    if (!arlst.Contains(vrslt))
+                    if (Results.TryGetValue(anothProp, out var arlst))
                     {
                         arlst.Add(vrslt);
+                    }
+                    else
+                    {
+                        arlst = new ErrorMessageEntry(vrslt);
+                        Results[anothProp] = arlst;
                     }
                 }
             }
         }
 
-        internal void Remove(ValidationResult vrslt)
+        internal void Remove(string property)
         {
-            if (vrslt.Result == Result.Invalid)
-            {
-                foreach (var key in vrslt.RelatedProperty)
-                {
-                    if (Results.TryGetValue(key, out var rlst))
-                    {
-                        if (rlst.Remove(vrslt) && rlst.Count == 0)
-                        {
-                            Results.Remove(key);
-                        }
-                    }
-                }
-            }
+            if (Results.TryGetValue(property, out var message))
+                foreach (var p in message.RelatedProperties)
+                    Results.Remove(p);
         }
 
 
         public ErrorMessageHolder()
         {
-            Results = new Dictionary<string, List<ValidationResult>>();
+            Results = new Dictionary<string, ErrorMessageEntry>();
         }
 
-        public ErrorMessageHolder(ErrorMessageHolder cp)
+        public ErrorMessageHolder(ErrorMessageHolder cp) : this()
         {
-            Results = new Dictionary<string, List<ValidationResult>>(cp.Results);
+            foreach (var entry in cp.Results)
+                Results[entry.Key] = new ErrorMessageEntry(entry.Value);
         }
 
         public ErrorMessageHolder Copy()
             => new ErrorMessageHolder(this);
+
+
+        #region equals
 
         public override bool Equals(object val)
         {
@@ -111,11 +105,12 @@ namespace FusianValid
                 if (Results.Count != msg.Results.Count)
                     return false;
 
-                foreach (var entry in Results)
+                foreach (var myEntry in Results)
                 {
-                    if (msg.Results.TryGetValue(entry.Key, out var tgtVal))
+                    if (msg.Results.TryGetValue(myEntry.Key, out var yourVal))
                     {
-                        return entry.Value.Equals(tgtVal);
+                        if (myEntry.Value != yourVal)
+                            return false;
                     }
                     else return false;
                 }
@@ -125,7 +120,19 @@ namespace FusianValid
             return false;
         }
 
-        public override int GetHashCode() => Results.GetHashCode();
+        public override int GetHashCode()
+        {
+            int hash = 0;
+
+            foreach (var entry in Results)
+            {
+                hash += entry.Key.GetHashCode();
+                hash += entry.Value.GetHashCode();
+                hash <<= 1;
+            }
+
+            return hash;
+        }
 
         public static bool operator ==(ErrorMessageHolder l, object r)
         {
@@ -139,5 +146,83 @@ namespace FusianValid
         public static bool operator !=(ErrorMessageHolder l, object r) => !(l == r);
         public static bool operator !=(object r, ErrorMessageHolder l) => !(l == r);
         public static bool operator !=(ErrorMessageHolder l, ErrorMessageHolder r) => !(l == (object)r);
+
+        #endregion
+    }
+
+    internal class ErrorMessageEntry
+    {
+        public string Message { set; get; }
+        public HashSet<string> RelatedProperties { private set; get; }
+
+        public ErrorMessageEntry(ValidationResult result)
+        {
+            Message = result.Message;
+            RelatedProperties = new HashSet<string>(result.RelatedProperty.Distinct());
+        }
+
+        public ErrorMessageEntry(ErrorMessageEntry entry)
+        {
+            Message = entry.Message;
+            RelatedProperties = new HashSet<string>(entry.RelatedProperties);
+        }
+
+
+        public void AddToTop(ValidationResult result)
+        {
+            Message = result.Message;
+            Add(result);
+        }
+
+        public void Add(ValidationResult result)
+        {
+            if (String.IsNullOrEmpty(Message))
+                Message = result.Message;
+
+            foreach (var key in result.RelatedProperty)
+                if (!RelatedProperties.Contains(key))
+                    RelatedProperties.Add(key);
+        }
+
+        #region equals 
+
+        public override bool Equals(object val)
+        {
+            if (val is ErrorMessageEntry msg)
+            {
+                if (Message != msg.Message) return false;
+
+                return RelatedProperties.SetEquals(msg.RelatedProperties);
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = Message.GetHashCode();
+
+            foreach (var prop in RelatedProperties.OrderBy(p => p))
+            {
+                hash += prop.GetHashCode();
+                hash <<= 1;
+            }
+
+            return hash;
+        }
+
+        public static bool operator ==(ErrorMessageEntry l, object r)
+        {
+            if (l is null && r is null) return true;
+            if (l is null) return false;
+            return l.Equals(r);
+        }
+        public static bool operator ==(object r, ErrorMessageEntry l) => l == r;
+        public static bool operator ==(ErrorMessageEntry l, ErrorMessageEntry r) => l == (object)r;
+
+        public static bool operator !=(ErrorMessageEntry l, object r) => !(l == r);
+        public static bool operator !=(object r, ErrorMessageEntry l) => !(l == r);
+        public static bool operator !=(ErrorMessageEntry l, ErrorMessageEntry r) => !(l == (object)r);
+
+        #endregion
     }
 }

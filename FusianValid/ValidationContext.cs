@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace FusianValid
 {
@@ -22,6 +20,8 @@ namespace FusianValid
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ErrorMessages)));
             }
         }
+
+        public bool HasError => ErrorMessages.HasError;
 
         public abstract void Validate();
 
@@ -70,17 +70,19 @@ namespace FusianValid
         {
             if (PropNm2Validator.TryGetValue(propNm, out var validator))
             {
-                var errMsgs = ErrorMessages.Copy();
-
-                if (validator.LastResult != null) {
-                    errMsgs.Remove(validator.LastResult);
-                }
-
                 validator.ClearResult();
 
-                errMsgs.Set(propNm, validator.ContinueCheck(TargetViewModel));
+                var errMsg = ErrorMessages.Copy();
+                errMsg.Remove(propNm);
 
-                ErrorMessages = errMsgs;
+                var helper = new ValidatorHelper(
+                    TargetViewModel,
+                    PropNm2Validator,
+                    errMsg);
+
+                helper.CheckRelatedProperty(propNm, false);
+
+                ErrorMessages = helper.ErrMsg;
             }
         }
 
@@ -89,12 +91,16 @@ namespace FusianValid
             foreach (var v in PropNm2Validator.Values)
                 v.ClearResult();
 
-            var errMsgs = new ErrorMessageHolder();
+            var helper = new ValidatorHelper(TargetViewModel, PropNm2Validator);
 
             foreach (var v in PropNm2Validator)
-                errMsgs.Set(v.Key, v.Value.ContinueCheck(TargetViewModel));
+            {
+                helper.PropLog.Clear();
 
-            ErrorMessages = errMsgs;
+                helper.CheckRelatedProperty(v.Key, false);
+            }
+
+            ErrorMessages = helper.ErrMsg;
         }
 
         public void Add(
@@ -183,5 +189,49 @@ namespace FusianValid
             }
             return chain;
         }
+
+        class ValidatorHelper
+        {
+            private T TargetViewModel;
+            private Dictionary<string, ValidatorChain<T>> PropNm2Validator { get; }
+            public HashSet<string> PropLog { get; }
+            public ErrorMessageHolder ErrMsg { get; }
+
+            public ValidatorHelper(T vm, Dictionary<string, ValidatorChain<T>> pn2v)
+                : this(vm, pn2v, new ErrorMessageHolder())
+            {
+            }
+            public ValidatorHelper(T vm, Dictionary<string, ValidatorChain<T>> pn2v, ErrorMessageHolder errMsg)
+            {
+                TargetViewModel = vm;
+                PropNm2Validator = pn2v;
+                ErrMsg = errMsg;
+                PropLog = new HashSet<string>();
+            }
+
+            public void CheckRelatedProperty(string property, bool insufficientOnly)
+            {
+                if (!PropLog.Contains(property)
+                    && PropNm2Validator.TryGetValue(property, out var validator))
+                {
+                    if (insufficientOnly && validator.LastResult != Result.Insufficient)
+                        return;
+
+                    try
+                    {
+                        PropLog.Add(property);
+                        ErrMsg.Set(
+                            property,
+                            validator.ContinueCheck(TargetViewModel, CheckRelatedProperty));
+                    }
+                    finally
+                    {
+                        PropLog.Remove(property);
+                    }
+
+                }
+            }
+        }
+
     }
 }

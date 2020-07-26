@@ -1,5 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Styling;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -9,6 +11,15 @@ namespace FusianValid.Avalonia
 {
     public class Error
     {
+        static Error()
+        {
+            var style = new Style(x => x.OfType<TextBox>().Class("error"));
+            style.Setters.Add(new Setter(TextBox.BackgroundProperty, new SolidColorBrush(Colors.Pink)));
+
+            Application.Current.Styles.Add(style);
+        }
+
+
         public static readonly AttachedProperty<string> ObserveProperty =
             AvaloniaProperty.RegisterAttached<Error, Control, string>("Observe");
 

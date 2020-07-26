@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace FusianValid
 {
@@ -11,6 +10,7 @@ namespace FusianValid
         public string[] Properties { get; }
         public Func<VM, bool> Validator { get; }
 
+        public virtual Result LastResult { protected set; get; } = Result.Insufficient;
 
         public ValidatorInfo(
             string relatedProps,
@@ -31,7 +31,6 @@ namespace FusianValid
             Validator = validatorFunc;
             Message = message;
         }
-
 
         public ValidatorInfo(
             Type viewModelType,
@@ -62,11 +61,18 @@ namespace FusianValid
 
         public virtual ValidationResult Check(VM viewModel)
         {
-            return Validator(viewModel) ?
+            var result = Validator(viewModel) ?
                 ValidationResult.Valid(Properties) :
                 ValidationResult.Invalid(Properties, Message);
+
+            LastResult = result.Result;
+
+            return result;
         }
 
-        public virtual void ClearResult() { }
+        public virtual void ClearResult()
+        {
+            LastResult = Result.Insufficient;
+        }
     }
 }

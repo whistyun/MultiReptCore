@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace FusianValid
 {
@@ -22,15 +21,20 @@ namespace FusianValid
         {
             var allChildrenExecuted = Children.Select(child => child.IsExecuted).Aggregate((l, r) => l & r);
 
-            if (allChildrenExecuted)
-            {
-                return Validator(viewModel) ?
-                    ValidationResult.Valid(Properties) :
-                    ValidationResult.Invalid(Properties, Message);
-            }
-            else
-                return ValidationResult.Insufficient(Properties);
+            ValidationResult latest =
+                allChildrenExecuted ?
+                (
+                    Validator(viewModel) ?
+                        ValidationResult.Valid(Properties) :
+                        ValidationResult.Invalid(Properties, Message)
+                ) :
+                ValidationResult.Insufficient(Properties);
+
+            LastResult = latest.Result;
+
+            return latest;
         }
+
 
         public Part CreatePart() => new Part(this, Properties, Validator, Message);
 
@@ -39,6 +43,12 @@ namespace FusianValid
             private CombiValidatorInfo<VM> parent;
 
             internal bool IsExecuted { private set; get; }
+
+            public override Result LastResult
+            {
+                protected set => throw new InvalidOperationException();
+                get => parent.LastResult;
+            }
 
             public Part(
                CombiValidatorInfo<VM> parent,
@@ -51,6 +61,7 @@ namespace FusianValid
                 this.parent.Children.Add(this);
             }
 
+
             public override ValidationResult Check(VM viewModel)
             {
                 IsExecuted = true;
@@ -59,7 +70,11 @@ namespace FusianValid
             }
 
 
-            public override void ClearResult() => IsExecuted = false;
+            public override void ClearResult()
+            {
+                IsExecuted = false;
+                parent.ClearResult();
+            }
         }
     }
 }

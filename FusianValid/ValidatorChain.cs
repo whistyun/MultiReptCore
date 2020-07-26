@@ -1,18 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace FusianValid
 {
+    internal delegate void RequestAnotherProperty(string property, bool insufficientOnly);
+
     internal class ValidatorChain<VM>
     {
         private List<ValidatorInfo<VM>> Chains = new List<ValidatorInfo<VM>>();
 
-        public ValidatorInfo<VM> LastValidation { private set; get; }
-        public ValidationResult LastResult { private set; get; }
-
         private string Property { get; }
+
+        public ValidationResult LastResult { private set; get; }
 
         public ValidatorChain(string prop)
         {
@@ -21,32 +20,45 @@ namespace FusianValid
 
         public void Add(ValidatorInfo<VM> v) => Chains.Add(v);
 
-        public ValidationResult ContinueCheck(VM viewModel)
-            => Check(viewModel, LastValidation is null ? 0 : Chains.IndexOf(LastValidation));
-
-        private ValidationResult Check(VM viewModel, int startAt)
+        public ValidationResult ContinueCheck(VM viewModel, RequestAnotherProperty anotherCheckerRequest)
         {
-            ValidationResult result = ValidationResult.Valid(new string[] { Property });
+            for (var i = 0; i < Chains.Count; ++i)
+            {
+                if (Chains[i].LastResult != Result.Valid)
+                {
+                    return Check(viewModel, i, anotherCheckerRequest);
+                }
+            }
 
+            return ValidationResult.Valid(new string[] { Property });
+        }
+
+
+        private ValidationResult Check(VM viewModel, int startAt, RequestAnotherProperty anotherCheckerRequest)
+        {
             for (var i = startAt; i < Chains.Count; ++i)
             {
                 var chain = Chains[i];
-                result = chain.Check(viewModel);
 
-                LastValidation = chain;
-                LastResult = result;
+                var relatedProperties = chain.Properties.Where(p => p != Property).ToArray();
+
+                foreach (var rprop in relatedProperties)
+                    anotherCheckerRequest(rprop, false);
+
+                var result = LastResult = chain.Check(viewModel);
 
                 if (result.Result != Result.Valid)
-                    break;
+                    return result;
+
+                foreach (var rprop in relatedProperties)
+                    anotherCheckerRequest(rprop, true);
             }
 
-            return result;
+            return LastResult = ValidationResult.Valid(new string[] { Property });
         }
 
         public void ClearResult()
         {
-            LastValidation = null;
-            LastResult = null;
             foreach (var chain in Chains)
                 chain.ClearResult();
         }
