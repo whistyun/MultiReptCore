@@ -1,27 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
+using System.Text.RegularExpressions;
 
 namespace FusianValid
 {
     public abstract class ValidationContext : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-
-        private ErrorMessageHolder _ErrorMessages;
-        public ErrorMessageHolder ErrorMessages
+        protected void FirePropertyChanged(string property)
         {
-            get => _ErrorMessages;
-            protected set
-            {
-                if (_ErrorMessages == value) return;
-
-                _ErrorMessages = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ErrorMessages)));
-            }
+            PropertyChanged?.Invoke(
+                this,
+                new PropertyChangedEventArgs(property));
         }
 
-        public bool HasError => ErrorMessages.HasError;
+        public abstract ErrorMessageHolder ErrorMessages { get; }
+
+        public abstract bool HasError { get; }
+        public abstract string GetMessage(string key);
+        public abstract Dictionary<string, string> EnumMessages();
 
         public abstract void Validate();
 
@@ -35,20 +35,130 @@ namespace FusianValid
     public class ValidationContext<T> : ValidationContext
         where T : INotifyPropertyChanged
     {
+        private static readonly Regex SubPtn = new Regex(@"sub(\d+)\.");
+        private static readonly Regex SubListPtn = new Regex(@"list(\d+)\[(\d+)\]\.");
+
+
         private T TargetViewModel { get; }
 
         private Dictionary<string, ValidatorChain<T>> PropNm2Validator { get; }
+
+        private List<IValidationContextHolder> SubList { get; }
+        private List<IList<IValidationContextHolder>> SubListList { get; }
+
+        private ErrorMessageHolder _ErrorMessages;
+        public override ErrorMessageHolder ErrorMessages => _ErrorMessages;
+
+        public override bool HasError
+        {
+            get
+            {
+                if (ErrorMessages.Results.Count > 0) return true;
+
+                foreach (var sub in SubList)
+                {
+                    if (sub.ValidationContext.HasError) return true;
+                }
+
+                foreach (var sublst in SubListList)
+                {
+                    foreach (var sub in sublst)
+                    {
+                        if (sub.ValidationContext.HasError) return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        public override string GetMessage(string key)
+        {
+            var mch1 = SubPtn.Match(key);
+            if (mch1.Success)
+            {
+                var subIdx = Int32.Parse(mch1.Groups[1].Value);
+                if (subIdx < SubList.Count)
+                {
+                    var subKey = key.Substring(mch1.Index + mch1.Length);
+                    return SubList[subIdx].ValidationContext.GetMessage(subKey);
+                }
+                else return null;
+            }
+
+            var mch2 = SubListPtn.Match(key);
+            if (mch2.Success)
+            {
+
+                var subIdx1 = Int32.Parse(mch2.Groups[1].Value);
+                if (subIdx1 < SubListList.Count)
+                {
+                    var list = SubListList[subIdx1];
+                    var subIdx2 = Int32.Parse(mch2.Groups[2].Value);
+                    if (subIdx2 < list.Count)
+                    {
+                        var subKey = key.Substring(mch2.Index + mch2.Length);
+                        return list[subIdx2].ValidationContext.GetMessage(subKey);
+                    }
+                    else return null;
+                }
+                else return null;
+            }
+
+            return ErrorMessages[key];
+        }
+
+        public override Dictionary<string, string> EnumMessages()
+        {
+            var dic = new Dictionary<string, string>();
+
+            foreach (var msg in ErrorMessages.Results)
+                dic[msg.Key] = msg.Value.Message;
+
+            for (var i = 0; i < SubList.Count; ++i)
+            {
+                foreach (var entry in SubList[i].ValidationContext.EnumMessages())
+                {
+                    dic[$"sub{i}.{entry.Key}"] = entry.Value;
+                }
+            }
+
+            for (var i = 0; i < SubListList.Count; ++i)
+            {
+                var list = SubListList[i];
+                for (var j = 0; j < list.Count; ++j)
+                {
+                    foreach (var entry in list[j].ValidationContext.EnumMessages())
+                    {
+                        dic[$"list{i}[{j}].{entry.Key}"] = entry.Value;
+                    }
+                }
+            }
+
+            return dic;
+        }
 
         public ValidationContext(T viewModel, bool autoValidation)
         {
             TargetViewModel = viewModel;
             PropNm2Validator = new Dictionary<string, ValidatorChain<T>>();
-            ErrorMessages = new ErrorMessageHolder();
+            SubList = new List<IValidationContextHolder>();
+            SubListList = new List<IList<IValidationContextHolder>>();
+
+            SetErrorMessage(new ErrorMessageHolder());
 
             if (autoValidation)
             {
                 TargetViewModel.PropertyChanged += ValidationByPropertyChanged;
             }
+        }
+
+        protected void SetErrorMessage(ErrorMessageHolder value)
+        {
+            if (_ErrorMessages == value) return;
+
+            _ErrorMessages = value;
+            FirePropertyChanged(nameof(ErrorMessages));
         }
 
         private void ValidationByPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -82,7 +192,7 @@ namespace FusianValid
 
                 helper.CheckRelatedProperty(propNm, false);
 
-                ErrorMessages = helper.ErrMsg;
+                SetErrorMessage(helper.ErrMsg);
             }
         }
 
@@ -100,7 +210,15 @@ namespace FusianValid
                 helper.CheckRelatedProperty(v.Key, false);
             }
 
-            ErrorMessages = helper.ErrMsg;
+            SetErrorMessage(helper.ErrMsg);
+
+
+            foreach (var sub in SubList)
+                sub.ValidationContext.Validate();
+
+            foreach (var sublst in SubListList)
+                foreach (var sub in sublst)
+                    sub.ValidationContext.Validate();
         }
 
         public void Add(
@@ -179,6 +297,15 @@ namespace FusianValid
             }
         }
 
+        public void ConnectContext<T2>(T2 sub) where T2 : IValidationContextHolder
+        {
+            SubList.Add(sub);
+        }
+
+        public void ConnectContext<T2>(IEnumerable<T2> list) where T2 : IValidationContextHolder
+        {
+            SubListList.Add(list.OfType<IValidationContextHolder>().ToList());
+        }
 
         private ValidatorChain<T> GetChain(string property)
         {
@@ -232,6 +359,5 @@ namespace FusianValid
                 }
             }
         }
-
     }
 }
