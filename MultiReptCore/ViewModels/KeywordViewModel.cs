@@ -73,13 +73,13 @@ namespace MultiReptCore.ViewModels
             ValidationContext = FusianValid.ValidationContext.Build(this);
 
             ValidationContext.Add(
-                "nullやん",
+                Message.Get("ItisEmpty"),
                 nameof(Keyword),
                 Validators.NotNullOrEmpty);
 
 
             ValidationContext.AddCombination(
-                "ばぐっとるやん",
+                Message.Get("InvalidRegex"),
                 (model) =>
                 {
                     if (model.IsRegex)

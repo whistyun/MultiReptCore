@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MultiReptCore", "MultiReptC
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FusianValid", "FusianValid\FusianValid.csproj", "{FB43EEA9-83DB-4A48-8B99-BEF0141E237C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FusianValid.Avalonia", "FusianValid.Avalonia\FusianValid.Avalonia.csproj", "{4A58B791-AA69-4A74-9B14-20268D7D679E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FusianValid.Avalonia", "FusianValid.Avalonia\FusianValid.Avalonia.csproj", "{4A58B791-AA69-4A74-9B14-20268D7D679E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

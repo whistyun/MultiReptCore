@@ -46,7 +46,10 @@ namespace FusianValid.Avalonia
                         (s2, e2) => ValidationResultChanged(control, s2, e2);
                 }
                 else if (control.DataContext != null)
-                    throw new ArgumentException();
+                {
+
+                    throw new ArgumentException($"{control.GetType().Name} has DataContext that is not IValidationContextHolder.");
+                }
             }
         }
 

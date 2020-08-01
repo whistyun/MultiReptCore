@@ -1,0 +1,6 @@
+﻿{
+  "//": "change cultureinfo (ex: ja_JP, en_US)",
+  "Locale": "en_US",
+
+  "HistoryBackupCount" :  20
+}

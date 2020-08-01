@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
@@ -44,7 +45,7 @@ namespace FusianValid
         private Dictionary<string, ValidatorChain<T>> PropNm2Validator { get; }
 
         private List<IValidationContextHolder> SubList { get; }
-        private List<IList<IValidationContextHolder>> SubListList { get; }
+        private List<Func<IEnumerable<IValidationContextHolder>>> SubListList { get; }
 
         private ErrorMessageHolder _ErrorMessages;
         public override ErrorMessageHolder ErrorMessages => _ErrorMessages;
@@ -62,7 +63,7 @@ namespace FusianValid
 
                 foreach (var sublst in SubListList)
                 {
-                    foreach (var sub in sublst)
+                    foreach (var sub in sublst.Invoke())
                     {
                         if (sub.ValidationContext.HasError) return true;
                     }
@@ -93,7 +94,7 @@ namespace FusianValid
                 var subIdx1 = Int32.Parse(mch2.Groups[1].Value);
                 if (subIdx1 < SubListList.Count)
                 {
-                    var list = SubListList[subIdx1];
+                    var list = SubListList[subIdx1].Invoke().ToList();
                     var subIdx2 = Int32.Parse(mch2.Groups[2].Value);
                     if (subIdx2 < list.Count)
                     {
@@ -125,7 +126,7 @@ namespace FusianValid
 
             for (var i = 0; i < SubListList.Count; ++i)
             {
-                var list = SubListList[i];
+                var list = SubListList[i].Invoke().ToList();
                 for (var j = 0; j < list.Count; ++j)
                 {
                     foreach (var entry in list[j].ValidationContext.EnumMessages())
@@ -143,7 +144,7 @@ namespace FusianValid
             TargetViewModel = viewModel;
             PropNm2Validator = new Dictionary<string, ValidatorChain<T>>();
             SubList = new List<IValidationContextHolder>();
-            SubListList = new List<IList<IValidationContextHolder>>();
+            SubListList = new List<Func<IEnumerable<IValidationContextHolder>>>();
 
             SetErrorMessage(new ErrorMessageHolder());
 
@@ -217,7 +218,7 @@ namespace FusianValid
                 sub.ValidationContext.Validate();
 
             foreach (var sublst in SubListList)
-                foreach (var sub in sublst)
+                foreach (var sub in sublst.Invoke())
                     sub.ValidationContext.Validate();
         }
 
@@ -304,7 +305,7 @@ namespace FusianValid
 
         public void ConnectContext<T2>(IEnumerable<T2> list) where T2 : IValidationContextHolder
         {
-            SubListList.Add(list.OfType<IValidationContextHolder>().ToList());
+            SubListList.Add(() => list.OfType<IValidationContextHolder>());
         }
 
         private ValidatorChain<T> GetChain(string property)

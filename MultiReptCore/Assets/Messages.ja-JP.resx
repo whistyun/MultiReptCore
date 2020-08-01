@@ -132,14 +132,32 @@
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
+  <data name="CannotReplaceBecauseError" xml:space="preserve">
+    <value>エラーが残っています。置換処理を実施できません。</value>
+  </data>
   <data name="Encoding" xml:space="preserve">
     <value>文字コード</value>
+  </data>
+  <data name="ErrDirectoryIsNotExist" xml:space="preserve">
+    <value>存在しないフォルダです</value>
+  </data>
+  <data name="ErrFilenameFilterIsEmpty" xml:space="preserve">
+    <value>入力してください</value>
+  </data>
+  <data name="ExecReplace" xml:space="preserve">
+    <value>置換実施</value>
   </data>
   <data name="FilenameFilter" xml:space="preserve">
     <value>フィルタ(*.txt,*.inf)</value>
   </data>
   <data name="IgnoreHiddenFile" xml:space="preserve">
     <value>隠しファイル/フォルダは処理しない</value>
+  </data>
+  <data name="InvalidRegex" xml:space="preserve">
+    <value>正規表現として解釈できません</value>
+  </data>
+  <data name="ItisEmpty" xml:space="preserve">
+    <value>未入力です</value>
   </data>
   <data name="Keyword" xml:space="preserve">
     <value>検索文字</value>
@@ -161,6 +179,12 @@
   </data>
   <data name="ReplaceWord" xml:space="preserve">
     <value>置換文字</value>
+  </data>
+  <data name="ReuseParam" xml:space="preserve">
+    <value>置換パラメタに使用する</value>
+  </data>
+  <data name="RevertReplace" xml:space="preserve">
+    <value>取消</value>
   </data>
   <data name="RootDirectory" xml:space="preserve">
     <value>フォルダ</value>

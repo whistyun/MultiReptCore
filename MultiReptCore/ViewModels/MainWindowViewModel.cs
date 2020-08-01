@@ -3,22 +3,36 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using ReactiveUI;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Reactive;
-using System.Text;
 using System.IO;
 using MultiReptCore.Views;
 using System.Linq;
 using System.Collections.ObjectModel;
 using Avalonia.Media;
+using FusianValid;
+using MessageBox.Avalonia;
+using MessageBox.Avalonia.Enums;
+using MessageBox.Avalonia.DTO;
+using MultiReptCore.Models;
+using Avalonia.Collections;
+using System;
+using Avalonia.Input;
 
 namespace MultiReptCore.ViewModels
 {
-    public class MainWindowViewModel : ViewModelBase
+    public class MainWindowViewModel : ViewModelBase, IValidationContextHolder<MainWindowViewModel>
     {
+        ValidationContext IValidationContextHolder.ValidationContext => ValidationContext;
+        public ValidationContext<MainWindowViewModel> ValidationContext { get; }
+
         #region MVVM Property
+
+        private int _ViewTabIndex;
+        public int ViewTabIndex
+        {
+            get => _ViewTabIndex;
+            set => this.RaiseAndSetIfChanged(ref _ViewTabIndex, value);
+        }
+
 
         private string _rootDirectory;
         public string RootDirectory
@@ -41,6 +55,12 @@ namespace MultiReptCore.ViewModels
             set => this.RaiseAndSetIfChanged(ref _selectedEncode, value);
         }
 
+        private bool _IgnoreHiddenFile;
+        public bool IgnoreHiddenFile
+        {
+            get => _IgnoreHiddenFile;
+            set => this.RaiseAndSetIfChanged(ref _IgnoreHiddenFile, value);
+        }
 
         private bool _isEncodeAutoDetect;
         public bool IsEncodeAutoDetect
@@ -63,11 +83,28 @@ namespace MultiReptCore.ViewModels
             set => this.RaiseAndSetIfChanged(ref _SelectedKeyword, value);
         }
 
+
+        private HistoryViewModel _SelectedHistory;
+        public HistoryViewModel SelectedHistory
+        {
+            get => _SelectedHistory;
+            set => this.RaiseAndSetIfChanged(ref _SelectedHistory, value);
+        }
+
+
+        private AvaloniaList<HistoryViewModel> _Histories;
+        public AvaloniaList<HistoryViewModel> Histories
+        {
+            get => _Histories;
+            set => this.RaiseAndSetIfChanged(ref _Histories, value);
+        }
+
+
         #endregion
 
         #region MVVM Command
 
-        private async void RunBrowseRootDirectory()
+        public async void RunBrowseRootDirectory()
         {
             var app = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
 
@@ -85,7 +122,7 @@ namespace MultiReptCore.ViewModels
             }
         }
 
-        private async void RunPreviewFilter()
+        public async void RunPreviewFilter()
         {
             var app = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
 
@@ -105,13 +142,13 @@ namespace MultiReptCore.ViewModels
             }
         }
 
-        private void RunAdd()
+        public void RunAdd()
         {
             Keywords.Add(new KeywordViewModel());
             Keywords.Last().Background = CreateColor(Keywords.Count % 2 == 0);
         }
 
-        private void RunRemove()
+        public void RunRemove()
         {
             if (SelectedKeyword != null)
             {
@@ -133,6 +170,77 @@ namespace MultiReptCore.ViewModels
            );
         }
 
+
+        public void RunRevertReplace()
+        {
+        }
+
+        public void RunExecReplace()
+        {
+            ValidationContext.Validate();
+
+            if (ValidationContext.HasError)
+            {
+                var app = (IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime;
+
+                var msBoxStandardWindow = MessageBoxManager.GetMessageBoxStandardWindow(
+                    new MessageBoxStandardParams
+                    {
+                        ButtonDefinitions = ButtonEnum.Ok,
+                        ContentTitle = "Error",
+                        ContentMessage = Message.Get("CannotReplaceBecauseError"),
+                        Icon = Icon.Warning,
+                    });
+                msBoxStandardWindow.ShowDialog(app.MainWindow);
+
+                return;
+            }
+
+            HistoryHelper.Register(this);
+
+
+
+        }
+
+        public void RemoveHistory()
+        {
+            HistoryHelper.Remove(SelectedHistory);
+        }
+
+        public void ReuseHistory()
+        {
+            var vm = SelectedHistory;
+
+            RootDirectory = vm.RootDirectory;
+            FilenameFilter = vm.FilenameFilter;
+            SelectedEncode =
+                EncodeViewModel.List
+                    .Where(enc => enc.Name == vm.SelectedEncode)
+                    .Concat(new[] { EncodeViewModel.List.FirstOrDefault() })
+                    .First();
+
+            IgnoreHiddenFile = vm.IgnoreHiddenFile;
+            IsEncodeAutoDetect = vm.IsEncodeAutoDetect;
+
+            Keywords.Clear();
+            foreach (var key in vm.Keywords)
+            {
+                Keywords.Add(
+                    new KeywordViewModel()
+                    {
+                        Keyword = key.Keyword,
+                        ReplaceWord = key.ReplaceWord,
+                        IsPlain = key.FindMethod == FindMethod.Plain,
+                        IsWord = key.FindMethod == FindMethod.Word,
+                        IsRegex = key.FindMethod == FindMethod.Regex,
+                    });
+
+                Keywords.Last().Background = CreateColor(Keywords.Count % 2 == 0);
+            }
+
+            ViewTabIndex = 0;
+        }
+
         #endregion
 
 
@@ -141,9 +249,32 @@ namespace MultiReptCore.ViewModels
             RootDirectory = "";
             FilenameFilter = "*.*";
             SelectedEncode = EncodeViewModel.Initial;
+            IgnoreHiddenFile = true;
             IsEncodeAutoDetect = true;
             Keywords = new ObservableCollection<KeywordViewModel>();
             RunAdd();
+
+            Histories = HistoryHelper.Cache;
+            SelectedHistory = Histories.FirstOrDefault();
+
+            ValidationContext = FusianValid.ValidationContext.Build(this);
+            ValidationContext.ConnectContext(Keywords);
+
+            ValidationContext.Add(
+                Message.Get("ItisEmpty"),
+                nameof(RootDirectory),
+                Validators.NotNullOrEmpty);
+
+            ValidationContext.Add(
+                Message.Get("ErrDirectoryIsNotExist"),
+                nameof(RootDirectory),
+                Validators.DirectoryExists);
+
+            ValidationContext.Add(
+                Message.Get("ErrFilenameFilterIsEmpty"),
+                nameof(FilenameFilter),
+                Validators.NotNullOrEmpty);
+
         }
     }
 }

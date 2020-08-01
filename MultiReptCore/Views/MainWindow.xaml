@@ -16,7 +16,7 @@
     <vm:MainWindowViewModel/>
   </Design.DataContext>
 
-  <TabControl>
+  <TabControl SelectedIndex="{Binding ViewTabIndex}">
     <TabControl.Styles>
       <Style Selector="TabItem">
         <Setter Property="Padding" Value="8,2"/>
@@ -64,6 +64,7 @@
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="200*"/>
+          <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <TextBlock
@@ -74,7 +75,7 @@
 
         <TextBox
             Grid.Row="0" Grid.Column="1"
-            Text="{Binding RootDirectory}"
+            Text="{fsnv:BindingWithError RootDirectory}"
             />
 
         <Button
@@ -91,7 +92,7 @@
 
         <TextBox
             Grid.Row="1" Grid.Column="1"
-            Text="{Binding FilenameFilter}"
+            Text="{fsnv:BindingWithError FilenameFilter}"
             />
 
         <Button
@@ -104,6 +105,7 @@
             Grid.Row="2" Grid.Column="1"
             Grid.ColumnSpan="2"
             Content="{local:Message IgnoreHiddenFile}"
+            IsChecked="{Binding IgnoreHiddenFile}"
             />
 
         <TextBlock
@@ -128,133 +130,250 @@
           IsChecked="{Binding IsEncodeAutoDetect}"
           Content="{local:Message Auto}"/>
 
+        <Border
+            Grid.Row="4" Grid.Column="0"
+            Grid.ColumnSpan="3"
+            BorderBrush="Black"
+            BorderThickness="1"
+            Padding="2"
+            Margin="1,4,1,0">
 
-        <DockPanel
-          Grid.Row="4" Grid.Column="0"
-          Grid.ColumnSpan="3"
-          LastChildFill="True">
+          <DockPanel LastChildFill="True">
 
-          <StackPanel Orientation="Horizontal"
-            DockPanel.Dock="Top">
+            <StackPanel Orientation="Horizontal"
+              DockPanel.Dock="Top">
 
-            <Button Content="{local:Message Add}" Command="{Binding RunAdd}"/>
-            <Button Content="{local:Message Remove}" Margin="8,0,0,0" Command="{Binding RunRemove}"/>
-          </StackPanel>
+              <Button Content="{local:Message Add}" Command="{Binding RunAdd}"/>
+              <Button Content="{local:Message Remove}" Margin="8,0,0,0" Command="{Binding RunRemove}"/>
+            </StackPanel>
 
-          <ListBox Items="{Binding Keywords}" SelectedItem="{Binding SelectedKeyword}">
-            <ListBox.Styles>
-              <Style Selector="ListBoxItem.even"  >
+            <ListBox Items="{Binding Keywords}" SelectedItem="{Binding SelectedKeyword}">
+              <ListBox.ItemTemplate>
+                <DataTemplate DataType="vm:KeywordViewModel">
+                  <Grid Background="{Binding Background}">
+                    <Grid.Styles>
+                      <Style Selector="Grid.even">
+                        <Setter Property="Background" Value="Gray"/>
+                      </Style>
+                      <Style Selector="TextBlock.cap">
+                        <Setter Property="Margin" Value="0,3,3,0"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                      </Style>
+                      <Style Selector="TextBox">
+                        <Setter Property="Margin" Value="0,3,3,0"/>
+                        <Setter Property="Padding" Value="2"/>
+                      </Style>
+                      <Style Selector="ComboBox">
+                        <Setter Property="Margin" Value="0,3,3,0"/>
+                        <Setter Property="Padding" Value="2"/>
+                      </Style>
+                      <Style Selector="Button">
+                        <Setter Property="Margin" Value="0,3,3,0"/>
+                        <Setter Property="Padding" Value="2"/>
+                      </Style>
+                      <Style Selector="ToggleButton">
+                        <Setter Property="Margin" Value="0,3,3,0"/>
+                        <Setter Property="Padding" Value="2"/>
+                      </Style>
+                    </Grid.Styles>
 
-              </Style>
-            </ListBox.Styles>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="Auto"/>
+                      <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto"/>
+                      <ColumnDefinition Width="100*"/>
+                    </Grid.ColumnDefinitions>
 
-            <ListBox.ItemTemplate>
-              <DataTemplate DataType="vm:KeywordViewModel">
-                <Grid Background="{Binding Background}">
-                  <Grid.Styles>
-                    <Style Selector="Grid.even">
-                      <Setter Property="Background" Value="Gray"/>
-                    </Style>
-                    <Style Selector="TextBlock.cap">
-                      <Setter Property="Margin" Value="0,3,3,0"/>
-                      <Setter Property="VerticalAlignment" Value="Center"/>
-                    </Style>
-                    <Style Selector="TextBox">
-                      <Setter Property="Margin" Value="0,3,3,0"/>
-                      <Setter Property="Padding" Value="2"/>
-                    </Style>
-                    <Style Selector="TextBox.error">
-                      <Setter Property="Background" Value="Pink"/>
-                    </Style>
-                    <Style Selector="ComboBox">
-                      <Setter Property="Margin" Value="0,3,3,0"/>
-                      <Setter Property="Padding" Value="2"/>
-                    </Style>
-                    <Style Selector="Button">
-                      <Setter Property="Margin" Value="0,3,3,0"/>
-                      <Setter Property="Padding" Value="2"/>
-                    </Style>
-                    <Style Selector="ToggleButton">
-                      <Setter Property="Margin" Value="0,3,3,0"/>
-                      <Setter Property="Padding" Value="2"/>
-                    </Style>
-                  </Grid.Styles>
+                    <TextBlock
+                        Classes="cap"
+                        Grid.Row="0" Grid.Column="0"
+                        Text="{local:Message Keyword}"/>
+                    <TextBox
+                        Grid.Row="0" Grid.Column="1"
+                        Text="{fsnv:BindingWithError Keyword}"/>
 
-                  <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                  </Grid.RowDefinitions>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="100*"/>
-                  </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Classes="cap"
+                        Grid.Row="1" Grid.Column="0"
+                        Text="{local:Message ReplaceWord}"/>
+                    <TextBox
+                        Grid.Row="1" Grid.Column="1"
+                        Text="{Binding ReplaceWord}"/>
 
-                  <TextBlock
-                      Classes="cap"
-                      Grid.Row="0" Grid.Column="0"
-                      Text="{local:Message Keyword}"/>
-                  <TextBox
-                      Grid.Row="0" Grid.Column="1"
-                      fsnv:Error.Observe="Keyword"
-                      Text="{Binding Keyword}"/>
-
-                  <TextBlock
-                      Classes="cap"
-                      Grid.Row="1" Grid.Column="0"
-                      Text="{local:Message ReplaceWord}"/>
-                  <TextBox
-                      Grid.Row="1" Grid.Column="1"
-                      Text="{Binding ReplaceWord}"/>
-
-                  <TextBlock
-                      Grid.Row="2" Grid.Column="0"
+                    <TextBlock
+                        Grid.Row="2" Grid.Column="0"
                       />
-                  <StackPanel
-                      Grid.Row="2" Grid.Column="1"
-                      Grid.ColumnSpan="2"
-                      Orientation="Horizontal"
-                      Margin="0,3,3,0">
-                    <RadioButton
-                      IsChecked="{Binding IsPlain}"
-                      Content="{local:Message Plain}"
+                    <StackPanel
+                        Grid.Row="2" Grid.Column="1"
+                        Grid.ColumnSpan="2"
+                        Orientation="Horizontal"
+                        Margin="0,3,3,0">
+                      <RadioButton
+                        IsChecked="{Binding IsPlain}"
+                        Content="{local:Message Plain}"
                       />
-                    <RadioButton
-                      IsChecked="{Binding IsWord}"
-                      Content="{local:Message Word}"
+                      <RadioButton
+                        IsChecked="{Binding IsWord}"
+                        Content="{local:Message Word}"
                       />
-                    <RadioButton
-                      IsChecked="{Binding IsRegex}"
-                      Content="{local:Message Regex}"
+                      <RadioButton
+                        IsChecked="{Binding IsRegex}"
+                        Content="{local:Message Regex}"
                       />
-                  </StackPanel>
+                    </StackPanel>
 
-                </Grid>
-              </DataTemplate>
-            </ListBox.ItemTemplate>
+                  </Grid>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
 
-          </ListBox>
+            </ListBox>
 
-        </DockPanel>
+          </DockPanel>
 
-
+        </Border>
 
         <DockPanel
             Grid.Row="5" Grid.Column="0"
-            Grid.ColumnSpan="2">
+            Grid.ColumnSpan="3">
+
+
+          <StackPanel Orientation="Horizontal"
+                      DockPanel.Dock="Right">
+
+            <Button
+                Content="{local:Message RevertReplace}"
+                Command="{Binding RunRevertReplace}"
+                Padding="4" Margin="5,1"
+                />
+
+            <Button
+                Content="{local:Message ExecReplace}"
+                Command="{Binding RunExecReplace}"
+                Padding="2" Margin="0,1"
+                FontSize="{DynamicResource FontSizeLarge}"/>
+          </StackPanel>
+
+          <ProgressBar Margin="1"
+              />
 
         </DockPanel>
-
-
       </Grid>
-
-
-
     </TabItem>
     <TabItem Header="{local:Message TagHistory}">
+      <Grid>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="30*"/>
+          <RowDefinition Height="40*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <DockPanel LastChildFill="False"
+            Grid.Row="0" Grid.Column="0">
+
+          <Button 
+            Content="{local:Message ReuseParam}"
+            Command="{Binding ReuseHistory}"
+            DockPanel.Dock="Left" />
+          <Button
+            Content="{local:Message Remove}"
+            Command="{Binding RemoveHistory}"
+            DockPanel.Dock="Right"/>
+        </DockPanel>
+
+        <!-- Don't foreget to setup app.xaml -->
+        <!-- see https://github.com/AvaloniaUI/Avalonia/issues/3446 -->
+        <DataGrid DockPanel.Dock="Top" AutoGenerateColumns="False"
+                  Items="{Binding Histories}"
+                  SelectedItem="{Binding SelectedHistory, Mode=TwoWay}"
+                  SelectionMode="Single"
+                  Grid.Row="1" Grid.Column="0">
+          <DataGrid.Columns>
+            <DataGridTextColumn
+                Header="execute time"
+                IsReadOnly="True"
+                Binding="{Binding ExecutedTime, StringFormat={}{0:MM/dd HH:mm:ss}}"
+              />
+            <DataGridTextColumn
+                Header="description"
+                IsReadOnly="False"
+                Binding="{Binding Description}"/>
+          </DataGrid.Columns>
+        </DataGrid>
+
+        <ListBox Items="{Binding SelectedHistory.Keywords}"
+                  Grid.Row="2" Grid.Column="0">
+          <ListBox.ItemTemplate>
+            <DataTemplate DataType="vm:HistoryKeywordViewModel">
+              <Grid>
+                <Grid.Styles>
+                  <Style Selector="Grid.even">
+                    <Setter Property="Background" Value="Gray"/>
+                  </Style>
+                  <Style Selector="TextBlock.cap">
+                    <Setter Property="Margin" Value="0,3,3,0"/>
+                    <Setter Property="VerticalAlignment" Value="Center"/>
+                  </Style>
+                  <Style Selector="TextBox">
+                    <Setter Property="Margin" Value="0,3,3,0"/>
+                    <Setter Property="Padding" Value="2"/>
+                  </Style>
+                  <Style Selector="ComboBox">
+                    <Setter Property="Margin" Value="0,3,3,0"/>
+                    <Setter Property="Padding" Value="2"/>
+                  </Style>
+                  <Style Selector="Button">
+                    <Setter Property="Margin" Value="0,3,3,0"/>
+                    <Setter Property="Padding" Value="2"/>
+                  </Style>
+                  <Style Selector="ToggleButton">
+                    <Setter Property="Margin" Value="0,3,3,0"/>
+                    <Setter Property="Padding" Value="2"/>
+                  </Style>
+                </Grid.Styles>
+
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="100*"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock
+                    Classes="cap"
+                    Grid.Row="0" Grid.Column="0"
+                    Text="{local:Message Keyword}"/>
+                <TextBox
+                    Grid.Row="0" Grid.Column="1"
+                    IsReadOnly="True"
+                    Text="{Binding Keyword}"/>
+
+                <TextBlock
+                    Classes="cap"
+                    Grid.Row="1" Grid.Column="0"
+                    Text="{local:Message ReplaceWord}"/>
+                <TextBox
+                    Grid.Row="1" Grid.Column="1"
+                    IsReadOnly="True"
+                    Text="{Binding ReplaceWord}"/>
+
+                <TextBlock
+                    Grid.Row="2" Grid.Column="1"
+                    Text="{Binding FindMethodName}"/>
+
+              </Grid>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Grid>
     </TabItem>
   </TabControl>
-
-
-
 </Window>

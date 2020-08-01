@@ -18,15 +18,24 @@
     <AvaloniaResource Remove="Assets\Messages.resx" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.1" />
-    <PackageReference Include="ReadJEnc" Version="1.3.1.2" />
-
     <PackageReference Include="Avalonia" Version="0.9.11" />
     <PackageReference Include="Avalonia.Desktop" Version="0.9.11" />
     <PackageReference Include="Avalonia.ReactiveUI" Version="0.9.11" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="0.9.11" />
+    <PackageReference Include="MessageBox.Avalonia" Version="0.9.6.1" />
+
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.1" />
+    <PackageReference Include="ReadJEnc" Version="1.3.1.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FusianValid.Avalonia\FusianValid.Avalonia.csproj" />
     <ProjectReference Include="..\FusianValid\FusianValid.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="MultiReptCore.config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

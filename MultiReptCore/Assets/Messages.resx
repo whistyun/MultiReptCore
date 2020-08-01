@@ -132,6 +132,9 @@
   <data name="Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
+  <data name="CannotReplaceBecauseError" xml:space="preserve">
+    <value>Some errors remain. So execution is cancelled.</value>
+  </data>
   <data name="Encoding" xml:space="preserve">
     <value>Encoding</value>
   </data>
@@ -141,11 +144,20 @@
   <data name="ErrFilenameFilterIsEmpty" xml:space="preserve">
     <value>Filter must be set</value>
   </data>
+  <data name="ExecReplace" xml:space="preserve">
+    <value>Start</value>
+  </data>
   <data name="FilenameFilter" xml:space="preserve">
     <value>File name filter (ex: *.txt,*.inf)</value>
   </data>
   <data name="IgnoreHiddenFile" xml:space="preserve">
     <value>Don't processe hidden file/directory</value>
+  </data>
+  <data name="InvalidRegex" xml:space="preserve">
+    <value>This text is not parseable as regex.</value>
+  </data>
+  <data name="ItisEmpty" xml:space="preserve">
+    <value>Not allow empty text.</value>
   </data>
   <data name="Keyword" xml:space="preserve">
     <value>Find what</value>
@@ -167,6 +179,15 @@
   </data>
   <data name="ReplaceWord" xml:space="preserve">
     <value>Replace with</value>
+  </data>
+  <data name="ReuseParam" xml:space="preserve">
+    <value>Use it as replace parameter</value>
+  </data>
+  <data name="RevertReplace" xml:space="preserve">
+    <value>Revert</value>
+  </data>
+  <data name="RootDirectory" xml:space="preserve">
+    <value>Folder</value>
   </data>
   <data name="TabReplace" xml:space="preserve">
     <value>Process</value>
